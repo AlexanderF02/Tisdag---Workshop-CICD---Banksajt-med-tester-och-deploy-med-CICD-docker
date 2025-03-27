@@ -67,6 +67,7 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           port: 22
+          timeout: 30m
           script: |
             cd /home/ubuntu/bank/frontend
             npm install
