@@ -61,7 +61,7 @@ jobs:
       - name: Add EC2 host to known hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+          echo "${{ secrets.HOST_KEY }}" >> ~/.ssh/known_hosts
 
       # Step 9: Debug SSH connection
       - name: Debug SSH connection
