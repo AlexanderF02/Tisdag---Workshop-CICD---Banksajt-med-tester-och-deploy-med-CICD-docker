@@ -13,54 +13,85 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      # Step 2: Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
           node-version: '20'
 
+      # Step 3: Cache Node.js modules
+      - name: Cache Node.js modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # Step 4: Install dependencies
       - name: Install dependencies
         run: |
           cd bank/frontend
           npm install --legacy-peer-deps
 
+      # Step 5: Run tests
       - name: Run tests
         run: |
           cd bank/frontend
           npm test
 
+      # Step 6: Build the project locally
+      - name: Build project
+        run: |
+          cd bank/frontend
+          npm run build
+
+      # Step 7: Add SSH key
       - name: Add SSH key
         id: add_ssh_key
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Check SSH key is added
-        run: |
-          ssh-add -l  # This lists the keys added to the SSH agent to verify the key is correctly loaded
-
+      # Step 8: Add EC2 host to known hosts
       - name: Add EC2 host to known hosts
         run: |
-          mkdir -p ~/.ssh  # Make sure the ~/.ssh directory exists
+          mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
 
+      # Step 9: Debug SSH connection
       - name: Debug SSH connection
         run: |
           ssh -v -o StrictHostKeyChecking=no ubuntu@${{ secrets.HOST }} echo "SSH connection successful"
 
-      - name: Deploy to EC2
+      # Step 10: Deploy pre-built files to EC2
+      - name: Deploy pre-built files to EC2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           port: 22
-          source: "bank/frontend/*"
-          target: "/home/ubuntu/bank/frontend"
+          source: "bank/frontend/.next/*"
+          target: "/home/ubuntu/bank/frontend/.next"
 
-      - name: Run build and deploy commands on EC2
+      # Step 11: Deploy static files (if applicable)
+      - name: Deploy static files to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          source: "bank/frontend/public/*"
+          target: "/home/ubuntu/bank/frontend/public"
+
+      # Step 12: Run the application on EC2
+      - name: Run application on EC2
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
@@ -70,9 +101,6 @@ jobs:
           timeout: 30m
           script: |
             cd /home/ubuntu/bank/frontend
-            npm install
-            npm run build
-            sudo npm install -g pm2  # Install pm2 globally
-            pm2 start npm --name "frontend" -- run start  # Start the application with pm2
-            pm2 restart frontend  # Restart the application if it is already running
-
+            sudo npm install -g pm2
+            pm2 start npm --name "frontend" -- run start
+            pm2 restart frontend
