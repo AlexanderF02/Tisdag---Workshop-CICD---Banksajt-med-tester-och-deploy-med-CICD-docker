@@ -42,22 +42,22 @@ jobs:
       - name: Add EC2 host to known hosts
         run: |
           mkdir -p ~/.ssh  # Make sure the ~/.ssh directory exists
-          ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
-          cat ~/.ssh/known_hosts  # Debug: Output the contents of known_hosts
+          ssh-keyscan -H 51.20.85.218 >> ~/.ssh/known_hosts  # Använd EC2:s offentliga IP-adress
+          cat ~/.ssh/known_hosts  # Debugging
 
       - name: Check SSH connection
         run: |
-          echo "Checking SSH connection to ${ { secrets.HOST } }"
-          ssh -v -o StrictHostKeyChecking=no ubuntu@${{ secrets.HOST }} echo "SSH connection successful"
+          echo "Checking SSH connection to 51.20.85.218"
+          ssh -v -o StrictHostKeyChecking=no ubuntu@51.20.85.218 echo "SSH connection successful"
 
       - name: Debug SSH folder permissions
         run: |
-          ls -la ~/.ssh  # Check permissions for the ~/.ssh folder and known_hosts file
+          ls -la ~/.ssh  # Kontrollera behörigheter för ~/.ssh mappen och known_hosts filen
 
       - name: Deploy to EC2
         uses: appleboy/scp-action@master
         with:
-          host: ${{ secrets.HOST }}
+          host: 51.20.85.218
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           port: 22
@@ -67,7 +67,7 @@ jobs:
       - name: Run build and deploy commands on EC2
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOST }}
+          host: 51.20.85.218
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           port: 22
