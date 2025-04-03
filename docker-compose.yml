@@ -25,7 +25,7 @@ services:
     ports:
       - "3307:3306"
     volumes:
-      - docker-github-actions_mysql-data:/var/lib/mysql
+      - ubuntu_mysql-data:/var/lib/mysql
     networks:
       - app-network
 
@@ -33,4 +33,4 @@ networks:
   app-network:
 
 volumes:
-  docker-github-actions_mysql-data:
+  ubuntu_mysql-data:
