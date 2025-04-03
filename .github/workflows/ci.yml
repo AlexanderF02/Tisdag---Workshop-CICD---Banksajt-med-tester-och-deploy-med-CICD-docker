@@ -1,4 +1,4 @@
-name: CI
+name: Run Tests
 
 on:
   push:
@@ -9,68 +9,28 @@ on:
       - main
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      # Step 2: Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
           node-version: '20'
 
+      # Step 3: Install dependencies
       - name: Install dependencies
         run: |
           cd bank/frontend
           npm install --legacy-peer-deps
 
+      # Step 4: Run tests
       - name: Run tests
         run: |
           cd bank/frontend
           npm test
-
-      - name: Add SSH key
-        id: add_ssh_key
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
-
-      - name: Check SSH key is added
-        run: |
-          ssh-add -l  # This lists the keys added to the SSH agent to verify the key is correctly loaded
-
-      - name: Add EC2 host to known hosts
-        run: |
-          mkdir -p ~/.ssh  # Make sure the ~/.ssh directory exists
-          ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
-
-      - name: Debug SSH connection
-        run: |
-          ssh -v -o StrictHostKeyChecking=no ubuntu@${{ secrets.HOST }} echo "SSH connection successful"
-
-      - name: Deploy to EC2
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: 22
-          source: "bank/frontend/*"
-          target: "/home/ubuntu/bank/frontend"
-
-      - name: Run build and deploy commands on EC2
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: 22
-          script: |
-            cd /home/ubuntu/bank/frontend
-            npm install
-            npm run build
-            sudo npm install -g pm2  # Install pm2 globally
-            pm2 start npm --name "frontend" -- run start  # Start the application with pm2
-            pm2 restart frontend  # Restart the application if it is already running

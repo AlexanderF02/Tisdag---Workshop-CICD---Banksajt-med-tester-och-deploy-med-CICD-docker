@@ -12,6 +12,7 @@ export default function Login() {
 
   const handleLogin = async () => {
     try {
+      // Use the public IP address or domain name of your EC2 instance
       const response = await fetch('http://ec2-51-20-85-218.eu-north-1.compute.amazonaws.com:3003/sessions', {
         method: 'POST',
         headers: {

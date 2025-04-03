@@ -8,6 +8,7 @@ export default function Register() {
 
   const handleRegister = async () => {
     try {
+      
       const response = await fetch('http://ec2-51-20-85-218.eu-north-1.compute.amazonaws.com:3003/users', {
         method: 'POST',
         headers: {
@@ -20,14 +21,15 @@ export default function Register() {
       });
 
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Network response was not ok');
       }
 
       const data = await response.json();
       alert('Användare skapad!');
     } catch (error) {
       console.error('Error:', error);
-      alert('Ett fel inträffade vid skapandet av användaren.');
+      alert('Ett fel inträffade vid skapandet av användaren: ' + error.message);
     }
   };
 
